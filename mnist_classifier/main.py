@@ -44,29 +44,37 @@ import gzip
 #   loss = np.mean((y_train[:batch_size] - y) ** 2)
 #   print(loss)
 
+def sum_to_shape(a, shape):
+  if a.shape == shape: return a
+  a = a.sum(tuple(range(a.ndim - len(shape))))
+  axis = tuple(i for i in range(a.ndim) if shape[i] == 1)
+  return a.sum(axis).reshape(shape)
+
+
 class Tensor:
-  def __init__(self, data, _prev=None):
+  def __init__(self, data, _prev=()):
     self.data = np.array(data) 
     self.grad = np.zeros_like(self.data)
     self._prev = _prev
+    self._grad_fn = lambda: None
 
   def __repr__(self):
     return f"Tensor(data={self.data}, grad={self.grad})"
 
   def __add__(self, other):
+    if not isinstance(other, Tensor): other = Tensor(other)
     out = Tensor(self.data + other.data, (self, other))
 
-    def grad_fn():
-      self.grad += out.grad  
-      other.grad += out.grad
+    def add_backward():
+      self.grad += sum_to_shape(out.grad, self.grad.shape)
+      other.grad += sum_to_shape(out.grad, other.grad.shape)
 
-    out.grad_fn = grad_fn
-
+    out._grad_fn = add_backward 
     return out
   
   def backward(self):
     topo = []
-    visited = {}
+    visited = set()
     def build_topo(v):
       if v not in visited:
         visited.add(v)
@@ -77,11 +85,18 @@ class Tensor:
 
     self.grad = np.ones_like(self.grad)
     for v in reversed(topo):
-      v.grad_fn()
+      v._grad_fn()
 
 def main():
   x = Tensor([2, 3])
-  print(x)
+  y = Tensor(3)
+  z = x + y
+
+  z.backward()
+
+  print("x", x) 
+  print("y", y) 
+  print("z", z) 
 
 if __name__ == "__main__":
   main()
