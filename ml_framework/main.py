@@ -44,79 +44,47 @@ import gzip
 #   loss = np.mean((y_train[:batch_size] - y) ** 2)
 #   print(loss)
 
-def sum_to_shape(a, shape):
-  if a.shape == shape: return a
-  a = a.sum(tuple(range(a.ndim - len(shape))))
-  axis = tuple(i for i in range(a.ndim) if shape[i] == 1)
-  return a.sum(axis).reshape(shape)
-
-class Tensor:
+class Val: 
   def __init__(self, data, prev=()):
-    self.data, self._prev = np.array(data), prev
-    self.grad, self._grad_fn = np.zeros_like(data), lambda: None
+    self.data, self._prev = data, prev
+    self.grad, self._grad_fn = 0, lambda: None
 
   def __repr__(self):
-    return f"Tensor(data={self.data}, grad={self.grad})"
+    return f"Val(data={self.data}, grad={self.grad})"
 
   def __add__(self, other):
-    if not isinstance(other, Tensor): other = Tensor(other)
-    out = Tensor(self.data + other.data, (self, other))
+    if not isinstance(other, Val): other = Val(other)
+    out = Val(self.data + other.data, (self, other))
+    def add_backward(): self.grad += out.grad; other.grad += out.grad
+    out._grad_fn = add_backward
+    return out 
 
-    def add_backward():
-      self.grad += sum_to_shape(out.grad, self.grad.shape)
-      other.grad += sum_to_shape(out.grad, other.grad.shape)
-
-    out._grad_fn = add_backward 
-    return out
-
-  def __mul__(self, other):
-    if not isinstance(other, Tensor): other = Tensor(other)
-    out = Tensor(self.data * other.data, (self, other))
-  
-    def mul_backward():
-      self.grad += sum_to_shape(other.data * out.grad, self.grad.shape)
-      other.grad += sum_to_shape(self.data * out.grad, other.grad.shape)
-
-    out._grad_fn = mul_backward 
-    return out
-
-  def __matmul__(self, other):
-    if not isinstance(other, Tensor): other = Tensor(other)
-    out = Tensor(self.data @ other.data, (self, other))
-  
-    def matmul_backward():
-      pass
-
-    out._grad_fn = matmul_backward 
-    return out
-  
   def backward(self):
-    topo = []
-    visited = set()
-    def build_topo(v):
-      if v not in visited:
-        visited.add(v)
-        for child in v._prev:
-          build_topo(child)
-        topo.append(v)
-    build_topo(self)
+    comp_graph, visited = [], set()
+    def dfs(node):
+      if node not in visited:
+        visited.add(node)
+        for child in node._prev:
+          dfs(child)
+        comp_graph.append(node)
+    dfs(self)
 
-    self.grad = np.ones_like(self.grad)
-    for v in reversed(topo):
-      v._grad_fn()
+    self.grad = 1
+    for node in reversed(comp_graph):
+      node._grad_fn()
 
 def main():
-  x = Tensor([2, 3])
-  y = Tensor(3)
-  t = Tensor([1, 2])
-  z = x * y * t
+
+  x = Val(3)
+  y = Val(5)
+  z = x + y
 
   z.backward()
 
   print("x", x) 
   print("y", y) 
-  print("t", t) 
   print("z", z) 
+
 
 if __name__ == "__main__":
   main()
