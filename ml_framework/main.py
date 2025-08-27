@@ -50,13 +50,10 @@ def sum_to_shape(a, shape):
   axis = tuple(i for i in range(a.ndim) if shape[i] == 1)
   return a.sum(axis).reshape(shape)
 
-
 class Tensor:
-  def __init__(self, data, _prev=()):
-    self.data = np.array(data) 
-    self.grad = np.zeros_like(self.data)
-    self._prev = _prev
-    self._grad_fn = lambda: None
+  def __init__(self, data, prev=()):
+    self.data, self._prev = np.array(data), prev
+    self.grad, self._grad_fn = np.zeros_like(data), lambda: None
 
   def __repr__(self):
     return f"Tensor(data={self.data}, grad={self.grad})"
@@ -70,6 +67,27 @@ class Tensor:
       other.grad += sum_to_shape(out.grad, other.grad.shape)
 
     out._grad_fn = add_backward 
+    return out
+
+  def __mul__(self, other):
+    if not isinstance(other, Tensor): other = Tensor(other)
+    out = Tensor(self.data * other.data, (self, other))
+  
+    def mul_backward():
+      self.grad += sum_to_shape(other.data * out.grad, self.grad.shape)
+      other.grad += sum_to_shape(self.data * out.grad, other.grad.shape)
+
+    out._grad_fn = mul_backward 
+    return out
+
+  def __matmul__(self, other):
+    if not isinstance(other, Tensor): other = Tensor(other)
+    out = Tensor(self.data @ other.data, (self, other))
+  
+    def matmul_backward():
+      pass
+
+    out._grad_fn = matmul_backward 
     return out
   
   def backward(self):
@@ -90,12 +108,14 @@ class Tensor:
 def main():
   x = Tensor([2, 3])
   y = Tensor(3)
-  z = x + y
+  t = Tensor([1, 2])
+  z = x * y * t
 
   z.backward()
 
   print("x", x) 
   print("y", y) 
+  print("t", t) 
   print("z", z) 
 
 if __name__ == "__main__":
