@@ -1,5 +1,6 @@
 import numpy as np
 import gzip
+import random
 
 # X_TRAIN_PATH = "dataset/train-images-idx3-ubyte.gz"
 # Y_TRAIN_PATH = "dataset/train-labels-idx1-ubyte.gz"
@@ -44,8 +45,9 @@ import gzip
 #   loss = np.mean((y_train[:batch_size] - y) ** 2)
 #   print(loss)
 
+
 class Val: 
-  def __init__(self, data, prev=()):
+  def __init__(self, data=random.random(), prev=()):
     self.data, self._prev = data, prev
     self.grad, self._grad_fn = 0, lambda: None
 
@@ -73,18 +75,19 @@ class Val:
     for node in reversed(comp_graph):
       node._grad_fn()
 
+
+class Linear:
+  def __init__(self, in_feat, out_feat):
+    self.in_feat, self.out_feat = in_feat, out_feat
+    self.w = [[Val() for _ in range(out_feat)] for _ in range(in_feat)]
+    self.b = [Val() for _ in range(out_feat)]
+
+  def __call__(self, x):
+    if len(x) != self.in_feat: raise ValueError("input length does not match in_feat")
+    return [sum((x[in_i] * w[in_i][out_i] for in_i in range(self.in_feat)), self.b[out_i]) for out_i in range(self.out_feat)]
+
 def main():
-
-  x = Val(3)
-  y = Val(5)
-  z = x + y
-
-  z.backward()
-
-  print("x", x) 
-  print("y", y) 
-  print("z", z) 
-
+  pass
 
 if __name__ == "__main__":
   main()
