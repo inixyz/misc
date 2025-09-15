@@ -21,7 +21,7 @@
 1. Load a mono WAV. Convert to float in \[−1,1], show shape and dtype, and plot the first 0.05 s.
 2. Reverse the signal with slicing. Plot the first 2000 samples of both signals.
 3. Create a fade-in/out using `np.linspace` ramps and multiply with the signal.
-4. Downsample by slicing with `sig[::2]`. Compare lengths and plot excerpts.
+4. Downsample by slicing with `sig[::2]`. Compare lengths and plots.
 
 ---
 
@@ -31,7 +31,7 @@
 
 1. Create `x` and compute `y = np.where(x<0, x**2, np.sqrt(x+1))`. Plot with axis labels and grid.
 2. Create `u = np.linspace(-2,2,201)` and compute `U = u[:,None]`, `V = u[None,:]`. Plot `U*V` and `U+V` as heatmaps.
-3. Simulate a random walk: `steps = np.random.choice([-1,1], size=2000)`, `pos = steps.cumsum()`. Plot and annotate the maximum excursion.
+3. Simulate a random walk: `steps = np.random.choice([-1,1], size=2000)`, `pos = steps.cumsum()`. Plot and annotate the maximum distance from start.
 4. Make a 6×6 array. Set a checkerboard pattern to −1 using slicing. Plot before and after.
 5. Reshape `np.arange(36)` to (6,6). Reshape it to (3,12), swap axes, and reshape back. Plot the result as an image.
 6. Create a 100×5 random matrix and multiply each column by `[1,2,3,4,5]`. Show column means before and after.
@@ -72,7 +72,7 @@
 
 ## C) Audio
 
-1. Load and plot a small excerpt.
+1. Load and plot a small portion of the audio.
 2. Reverse only the first half of the signal and compare to the original.
 3. Multiply by a triangular envelope created with `np.linspace`.
 4. Stack into a stereo array `(N,2)` with different scaling on each channel.
@@ -100,7 +100,7 @@
 ## C) Audio
 
 1. Load and normalize audio. Plot.
-2. Keep two samples, drop one using reshaping and slicing. Plot result.
+2. Keep every other sample only with slicing. Plot result.
 3. Apply different gains to samples before and after 0.5 s using a mask.
 4. Pad 0.2 s of zeros at the end with `np.pad`. Verify new length.
 
@@ -111,7 +111,7 @@
 ## A) Matplotlib + NumPy Core
 
 1. Generate a 2D lattice `Z = sin(2πkx)+sin(2πly)` over a meshgrid. Plot with colorbar.
-2. Start with a zeros (50×50) array and add outer products of small vectors to draw stripes or shapes. Plot after each step.
+2. Start with a zeros (50×50) array and remove all other values in steps until there is nothing left. Plot after each step.
 3. Create `A = np.arange(64).reshape(8,8)`. Split into 2×2 quadrants and swap them around using slicing. Plot before and after.
 4. For a random matrix, plot row medians as a line and column maxima as a bar plot.
 5. Normalize rows to \[0,1] and apply a per-row threshold vector to make a binary heatmap.
